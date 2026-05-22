@@ -1,14 +1,15 @@
+// SMART TRAVEL DASHBOARD 
 const state = {
-  allCountries: [],          
-  filteredCountries: [],     
+  allCountries: [],          // Tableau de tous les pays (Array)
+  filteredCountries: [],     // Pays après filtrage/tri
+  // Web Storage 
   favorites: JSON.parse(localStorage.getItem('favorites')) || [],
-  theme: localStorage.getItem('theme') || 'dark',
+  // sessionStorage 
   currentPage: 1,
   itemsPerPage: 12,
-  exchangeRates: {},        
+  exchangeRates: {},   // Taux de change (Object key:value)
   searchCount: parseInt(localStorage.getItem('searchCount')) || 0,
 };
-
 const API = {
   COUNTRIES: 'https://restcountries.com/v3.1/all',
   COUNTRIES_FALLBACK: 'https://studies.cs.helsinki.fi/restcountries/api/all',
@@ -16,15 +17,14 @@ const API = {
   WEATHER: 'https://api.openweathermap.org/data/2.5/weather',
   WEATHER_KEY: 'YOUR_API_KEY_HERE', 
 };
-
+//SÉLECTION DES ÉLÉMENTS DOM (Manipulation DOM)
 const el = {
   loader:        document.getElementById('loader'),
   globalSearch:  document.getElementById('globalSearch'),
-  navItems:      document.querySelectorAll('.nav-item'),
+  navItems:      document.querySelectorAll('.nav-item'), // NodeList (comme un tableau)
   sections:      document.querySelectorAll('.section'),
-  themeToggle:   document.getElementById('themeToggle'),
-  themeIcon:     document.getElementById('themeIcon'),
   navClock:      document.getElementById('navClock'),
+  // Dashboard
   statTotal:     document.getElementById('stat-total'),
   statFavs:      document.getElementById('stat-favs'),
   statSearches:  document.getElementById('stat-searches'),
@@ -34,6 +34,7 @@ const el = {
   badgeTotal:    document.getElementById('badge-total'),
   badgeFav:      document.getElementById('badge-fav'),
   shuffleBtn:    document.getElementById('shuffleBtn'),
+  // Explorer
   exploreSearch: document.getElementById('exploreSearch'),
   regionFilter:  document.getElementById('regionFilter'),
   sortFilter:    document.getElementById('sortFilter'),
@@ -41,9 +42,11 @@ const el = {
   resultsCount:  document.getElementById('resultsCount'),
   pagination:    document.getElementById('pagination'),
   // Météo
+  weatherInput:  document.getElementById('weatherInput'),
   weatherBtn:    document.getElementById('weatherBtn'),
   weatherResult: document.getElementById('weatherResult'),
   // Devises
+  currAmount:    document.getElementById('currAmount'),
   currFrom:      document.getElementById('currFrom'),
   currTo:        document.getElementById('currTo'),
   swapBtn:       document.getElementById('swapBtn'),
@@ -51,66 +54,75 @@ const el = {
   currResult:    document.getElementById('currResult'),
   resultText:    document.getElementById('resultText'),
   // Favoris
+  favoritesGrid: document.getElementById('favoritesGrid'),
   favEmpty:      document.getElementById('favEmpty'),
   clearFavBtn:   document.getElementById('clearFavBtn'),
   // Modal
+  modal:         document.getElementById('modal'),
   modalBox:      document.getElementById('modalBox'),
   modalClose:    document.getElementById('modalClose'),
   modalContent:  document.getElementById('modalContent'),
   // Toast
-  
-
+  toastContainer:document.getElementById('toastContainer'),
+};
+// 4. POINT D'ENTRÉE : Initialisation quand le DOM est prêt
+// ---------------------------------------------------------------
+// 'DOMContentLoaded' est un événement déclenché quand le HTML est
+// complètement chargé et parsé (sans attendre les images/CSS).
+// C'est le bon moment pour commencer à manipuler le DOM.
+// ================================================================
 document.addEventListener('DOMContentLoaded', () => {
-  initTheme();       
-  initClock();       
-  setupEvents(
-  initClock();
-  setupEvents();
-  loadAllData();
-function initTheme() {
-  document.documentElement.setAttribute('data-theme', state.theme);
-  updateThemeIcon();
-}
+  initClock();        // Démarrer l'horloge
+  setupEvents();      // Attacher tous les écouteurs d'événements
+  loadAllData();      // Charger les données depuis les APIs
+});
 
-function toggleTheme() {
-  state.theme = state.theme === 'dark' ? 'light' : 'dark';
-  document.documentElement.setAttribute('data-theme', state.theme);
-  localStorage.setItem('theme', state.theme);
-  updateThemeIcon();
-}
-
-function updateThemeIcon() {
-  el.themeIcon.className = state.theme === 'dark'
-    ? 'fa-solid fa-moon'
-    : 'fa-solid fa-sun';
-}
-
+// ================================================================
+// 5. HORLOGE TEMPS RÉEL – setInterval (asynchrone, périodique)
+// ---------------------------------------------------------------
+// setInterval(callback, ms) : exécute une fonction toutes les X ms.
+// Ici, on met à jour l'heure chaque seconde.
+// ================================================================
 function initClock() {
   setInterval(() => {
-    const now = new Date(); 
-    el.navClock.textContent
+    const now = new Date(); // Objet Date JavaScript
+    // toLocaleTimeString() formate l'heure selon la locale
     el.navClock.textContent = now.toLocaleTimeString('fr-FR', {
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit'
     });
-  }, 1000);
+  }, 1000); // 1000 ms = 1 seconde
+}
+
+// ================================================================
+// 6. GESTION DES ÉVÉNEMENTS (Event Listeners)
+// ---------------------------------------------------------------
+// addEventListener(event, callback) attache un écouteur d'événement.
+// On centralise tous les attachements dans une fonction pour
+// la lisibilité et la modularité.
+// ================================================================
 function setupEvents() {
-  el.themeToggle.addEventListener('click', toggleTheme);
+  // ✅ Navigation (itération avec forEach sur une NodeList)
   el.navItems.forEach(item => {
     item.addEventListener('click', (event) => {
-      event.preventDefault(); 
-      const section = item.ge
-      const section = item.getAttribute('data-section');
+      event.preventDefault(); // Empêche le comportement par défaut du lien (<a>)
+      const section = item.getAttribute('data-section'); // Lire un attribut HTML
       showSection(section);
     });
   });
+
+  // ✅ Recherche globale dans la navbar (événement 'input')
   el.globalSearch.addEventListener('input', (e) => {
+    // On navigue vers l'onglet Explorer si pas déjà là
     showSection('explore');
     el.exploreSearch.value = e.target.value;
-    applyFilters();
+    applyFilters(); // Mise à jour en temps réel
+  });
 
+  // ✅ Filtres de la section Explorer
   el.exploreSearch.addEventListener('input', () => {
+    // Validation : incrémenter le compteur seulement si terme significatif
     if (el.exploreSearch.value.length > 2) {
       state.searchCount++;
       localStorage.setItem('searchCount', state.searchCount);
@@ -120,133 +132,215 @@ function setupEvents() {
   });
   el.regionFilter.addEventListener('change', applyFilters);
   el.sortFilter.addEventListener('change', applyFilters);
+
+  // ✅ Bouton Shuffle (mélanger les pays vedettes)
   el.shuffleBtn.addEventListener('click', renderFeatured);
+
+  // ✅ Météo
   el.weatherBtn.addEventListener('click', fetchWeather);
+  // Permettre de valider avec la touche Entrée (événement 'keydown')
   el.weatherInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') fetchWeather();
   });
+
+  // ✅ Conversion de devises
   el.convertBtn.addEventListener('click', convertCurrency);
   el.swapBtn.addEventListener('click', swapCurrencies);
+
+  // ✅ Favoris
   el.clearFavBtn.addEventListener('click', clearAllFavorites);
+
+  // ✅ Modal : fermeture au clic sur le fond ou le bouton X
   el.modalClose.addEventListener('click', closeModal);
   el.modal.addEventListener('click', (e) => {
+    // e.target est l'élément cliqué ; on ferme seulement si c'est le fond
     if (e.target === el.modal) closeModal();
   });
+  // Fermeture avec la touche Échap (Escape)
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') closeModal();
   });
 }
 
+// ================================================================
+// 7. NAVIGATION ENTRE SECTIONS (Manipulation DOM)
+// ---------------------------------------------------------------
+// On utilise les classes CSS pour afficher/cacher les sections.
+// classList.add(), classList.remove(), classList.toggle() sont les
+// méthodes clés pour manipuler les classes CSS d'un élément.
+// ================================================================
 function showSection(sectionId) {
+  // Désactiver toutes les sections
   el.sections.forEach(s => s.classList.remove('active'));
   el.navItems.forEach(n => n.classList.remove('active'));
+
+  // Activer la section cible
   const targetSection = document.getElementById(`section-${sectionId}`);
   const targetNav = document.getElementById(`nav-${sectionId}`);
 
   if (targetSection) targetSection.classList.add('active');
   if (targetNav) targetNav.classList.add('active');
+
+  // Actions spécifiques selon la section
   if (sectionId === 'favorites') renderFavorites();
   if (sectionId === 'currency') renderPopularRates();
 
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+// ================================================================
+// 8. CHARGEMENT DES DONNÉES (async/await + fetch + Promise)
+// ---------------------------------------------------------------
+// async : déclare une fonction asynchrone qui retourne une Promise
+// await : attend la résolution d'une Promise avant de continuer
+// fetch() : envoie une requête HTTP vers une URL externe (API REST)
+// try/catch : gestion d'erreurs pour les opérations asynchrones
+// ================================================================
 async function loadAllData() {
   try {
+    // Charger les pays et les taux de change EN PARALLÈLE
+    // Promise.all() exécute plusieurs Promises simultanément
+    // et attend que TOUTES soient résolues
     const [countriesData, ratesData] = await Promise.all([
       fetchCountries(),
       fetchExchangeRates()
     ]);
+
+    // Stocker dans l'état global (structures de données)
     state.allCountries = countriesData;
-    state.filteredCountries = [...countriesData];
+    state.filteredCountries = [...countriesData]; // Copie du tableau avec spread operator
     state.exchangeRates = ratesData;
+
+    // Mettre à jour l'interface
     updateDashboardStats();
     renderFeatured();
     renderCountriesGrid();
     populateCurrencySelects();
 
   } catch (error) {
+    // ✅ Gestion d'erreur : afficher un message à l'utilisateur
     console.error('Erreur de chargement:', error);
     showToast('Erreur de chargement des données', 'error');
   } finally {
+    // 'finally' s'exécute toujours, succès ou erreur
+    // Cacher le loader après le chargement
     el.loader.classList.add('hidden');
   }
 }
+
+// ----------------------------------------------------------------
+// Fonction de récupération des pays avec fallback (plan B)
+// Si l'API principale échoue, on essaie une API de secours.
+// ----------------------------------------------------------------
 async function fetchCountries() {
+  // ✅ Fetch + await + vérification de la réponse
   let response = await fetch(API.COUNTRIES);
   if (!response.ok) {
+    // Fallback : si l'API principale est down
     console.warn('API principale indisponible, utilisation du fallback...');
     response = await fetch(API.COUNTRIES_FALLBACK);
   }
   if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
+  // response.json() retourne une Promise qui résout avec les données parsées
   return await response.json();
 }
+
+// ----------------------------------------------------------------
+// Récupération des taux de change
+// ----------------------------------------------------------------
 async function fetchExchangeRates() {
   try {
     const response = await fetch(API.EXCHANGE);
     if (!response.ok) throw new Error('Exchange API failed');
     const data = await response.json();
+    // data.rates est un objet : { "EUR": 0.92, "GBP": 0.79, ... }
     return data.rates;
   } catch (e) {
+    // Si l'API de devises échoue, utiliser des données statiques de secours
     console.warn('Exchange API failed, using fallback data');
     return { USD:1, EUR:0.92, GBP:0.79, JPY:150, MAD:10.5, CAD:1.36, AUD:1.53, CHF:0.88 };
   }
 }
 
+// ================================================================
+// 9. DASHBOARD – Statistiques et cartes vedettes
+// ================================================================
 function updateDashboardStats() {
+  // ✅ Manipulation DOM : modifier le textContent de plusieurs éléments
   el.statTotal.textContent   = state.allCountries.length;
   el.statFavs.textContent    = state.favorites.length;
   el.statSearches.textContent = state.searchCount;
   el.badgeTotal.textContent  = state.allCountries.length;
   el.badgeFav.textContent    = state.favorites.length;
 
+  // Afficher le dernier pays visité (depuis sessionStorage)
   const lastCca3 = sessionStorage.getItem('lastCountry');
   if (lastCca3) {
+    // Array.find() : cherche le premier élément qui satisfait la condition
     const country = state.allCountries.find(c => c.cca3 === lastCca3);
     if (country) {
-      el.lastSearchBody.innerHTML = '';
+      el.lastSearchBody.innerHTML = ''; // Vider le contenu précédent
       el.lastSearchBody.appendChild(createCountryCard(country));
     }
   }
 }
 
+// ----------------------------------------------------------------
+// Pays vedettes : 6 pays aléatoires
+// sort(() => Math.random() - 0.5) : algorithme de mélange simple
+// ----------------------------------------------------------------
 function renderFeatured() {
   if (!state.allCountries.length) return;
-  el.featuredGrid.innerHTML = '';
+  el.featuredGrid.innerHTML = ''; // Vider la grille
+
+  // Mélanger et prendre les 6 premiers
   const shuffled = [...state.allCountries].sort(() => Math.random() - 0.5);
-  const featured = shuffled.slice(0, 6);
+  const featured = shuffled.slice(0, 6); // slice(début, fin) extrait une portion
+
+  // Pour chaque pays, créer une carte et l'ajouter au DOM
   featured.forEach(country => {
     el.featuredGrid.appendChild(createCountryCard(country));
   });
 }
 
+// ================================================================
+// 10. EXPLORER LES PAYS – Filtrage, tri, pagination
+// ================================================================
 function applyFilters() {
+  // Récupérer les valeurs des contrôles (lecture du DOM)
   const term   = el.exploreSearch.value.toLowerCase().trim();
   const region = el.regionFilter.value;
   const sortBy = el.sortFilter.value;
+
+  // ✅ Array.filter() : crée un nouveau tableau avec les éléments qui passent le test
   let filtered = state.allCountries.filter(country => {
+    // ✅ Validation des données : vérifier que les propriétés existent avant de les utiliser
     const name    = country.name?.common?.toLowerCase() || '';
-    const capital = country.capital?.[0]?.toLowerCase() || '';
+    const capital = country.capital?.[0]?.toLowerCase() || ''; // Optional chaining ?.
     const rgn     = country.region || '';
 
     const matchSearch = name.includes(term) || capital.includes(term);
     const matchRegion = region === '' || rgn === region;
     return matchSearch && matchRegion;
   });
+
+  // ✅ Array.sort() : tri en place avec une fonction de comparaison
   filtered.sort((a, b) => {
     if (sortBy === 'name')       return a.name.common.localeCompare(b.name.common);
     if (sortBy === 'population') return (b.population || 0) - (a.population || 0);
     if (sortBy === 'area')       return (b.area || 0) - (a.area || 0);
-    return 0;
+    return 0; // Pas de changement d'ordre
   });
 
   state.filteredCountries = filtered;
-  state.currentPage = 1;
+  state.currentPage = 1; // Revenir à la première page après un filtre
   renderCountriesGrid();
 }
+
 function renderCountriesGrid() {
   const start = (state.currentPage - 1) * state.itemsPerPage;
   const end   = start + state.itemsPerPage;
+  // Array.slice() extrait une portion du tableau (pour la pagination)
   const pageItems = state.filteredCountries.slice(start, end);
 
   el.countriesGrid.innerHTML = '';
@@ -267,10 +361,15 @@ function renderCountriesGrid() {
   renderPagination();
 }
 
+// ----------------------------------------------------------------
+// Pagination : boutons de navigation
+// ----------------------------------------------------------------
 function renderPagination() {
   const total = Math.ceil(state.filteredCountries.length / state.itemsPerPage);
   el.pagination.innerHTML = '';
   if (total <= 1) return;
+
+  // Bouton Précédent
   const prev = document.createElement('button');
   prev.className = 'page-btn';
   prev.innerHTML = '<i class="fa-solid fa-chevron-left"></i>';
@@ -278,6 +377,7 @@ function renderPagination() {
   prev.onclick = () => { state.currentPage--; renderCountriesGrid(); };
   el.pagination.appendChild(prev);
 
+  // Numéros de pages
   const startP = Math.max(1, state.currentPage - 2);
   const endP   = Math.min(total, startP + 4);
   for (let i = startP; i <= endP; i++) {
@@ -288,6 +388,7 @@ function renderPagination() {
     el.pagination.appendChild(btn);
   }
 
+  // Bouton Suivant
   const next = document.createElement('button');
   next.className = 'page-btn';
   next.innerHTML = '<i class="fa-solid fa-chevron-right"></i>';
@@ -296,15 +397,23 @@ function renderPagination() {
   el.pagination.appendChild(next);
 }
 
+// ================================================================
+// 11. CARTE DE PAYS – Fabrique de composant DOM
+// ---------------------------------------------------------------
+// createCountryCard() est une "factory function" : elle crée et
+// retourne un élément DOM prêt à être inséré dans la page.
+// ================================================================
 function createCountryCard(country) {
   const isFav    = state.favorites.includes(country.cca3);
   const capital  = country.capital?.[0] || 'N/A';
   const pop      = country.population?.toLocaleString('fr-FR') || 'N/A';
   const flagUrl  = country.flags?.svg || country.flags?.png || '';
 
+  // ✅ Manipulation DOM : créer un élément HTML avec JavaScript
   const card = document.createElement('div');
   card.className = 'country-card';
 
+  // ✅ innerHTML : injecter du HTML dynamique (template literal avec backticks)
   card.innerHTML = `
     <img src="${flagUrl}" alt="Drapeau ${country.name.common}" class="card-flag" loading="lazy">
     <div class="card-body">
@@ -320,21 +429,28 @@ function createCountryCard(country) {
       </div>
     </div>
   `;
+
+  // Attacher les événements aux boutons de la carte
   card.querySelector('.btn-outline').addEventListener('click', () => openModal(country));
   card.querySelector('.btn-fav').addEventListener('click', (e) => {
-    e.stopPropagation();
+    e.stopPropagation(); // ⚡ Empêche la propagation de l'événement vers la carte parente
     toggleFavorite(country.cca3);
+    // Mettre à jour le bouton de cette carte spécifiquement
     const btn = card.querySelector('.btn-fav');
     const nowFav = state.favorites.includes(country.cca3);
     btn.className = `btn-fav${nowFav ? ' active' : ''}`;
     btn.innerHTML = `<i class="${nowFav ? 'fa-solid' : 'fa-regular'} fa-heart"></i>`;
   });
 
+  // Clic sur la carte entière → ouvrir le modal
   card.addEventListener('click', () => openModal(country));
 
   return card;
 }
 
+// ================================================================
+// 12. MODAL DÉTAIL PAYS (Manipulation DOM avancée)
+// ================================================================
 function openModal(country) {
   const isFav      = state.favorites.includes(country.cca3);
   const capital    = country.capital?.join(', ') || 'N/A';
@@ -371,43 +487,59 @@ function openModal(country) {
     </div>
   `;
 
+  // Activer le modal (modifier le DOM pour l'afficher)
   el.modal.classList.add('active');
-  document.body.style.overflow = 'hidden';
+  document.body.style.overflow = 'hidden'; // Bloquer le scroll de la page
 
+  // ✅ sessionStorage : mémoriser le dernier pays vu (session uniquement)
   sessionStorage.setItem('lastCountry', country.cca3);
   updateDashboardStats();
 
+  // Événements dans le modal
   document.getElementById('modalFavBtn').addEventListener('click', () => {
     toggleFavorite(country.cca3);
-    closeModal();
+    closeModal(); // Fermer et rouvrir pour rafraîchir l'état
     openModal(country);
   });
   document.getElementById('modalWeatherBtn').addEventListener('click', () => {
     closeModal();
     showSection('weather');
-    el.weatherInput.value = capital.split(',')[0];
+    el.weatherInput.value = capital.split(',')[0]; // Prendre la première capitale
     fetchWeather();
   });
 }
 
 function closeModal() {
   el.modal.classList.remove('active');
-  document.body.style.overflow = '';
+  document.body.style.overflow = ''; // Réactiver le scroll
 }
 
+// ================================================================
+// 13. FAVORIS – Web Storage (localStorage)
+// ---------------------------------------------------------------
+// localStorage : stockage permanent (survive à la fermeture du navigateur)
+// Les données sont stockées en JSON (chaîne de caractères).
+// JSON.stringify() : convertit un objet/tableau JS en chaîne JSON
+// JSON.parse() : reconvertit une chaîne JSON en objet/tableau JS
+// ================================================================
 function toggleFavorite(cca3) {
+  // ✅ Array.indexOf() : retourne l'index ou -1 si absent
   const idx = state.favorites.indexOf(cca3);
 
   if (idx === -1) {
-    state.favorites.push(cca3);
+    // Pas encore favori → ajouter
+    state.favorites.push(cca3); // push() ajoute à la fin du tableau
     showToast('Ajouté aux favoris ❤️', 'success');
   } else {
-    state.favorites.splice(idx, 1);
+    // Déjà favori → retirer
+    state.favorites.splice(idx, 1); // splice(index, nbÀSupprimer) retire des éléments
     showToast('Retiré des favoris', 'info');
   }
 
+  // ✅ Web Storage : sauvegarder le tableau mis à jour
   localStorage.setItem('favorites', JSON.stringify(state.favorites));
 
+  // Mettre à jour les badges et compteurs
   el.statFavs.textContent  = state.favorites.length;
   el.badgeFav.textContent  = state.favorites.length;
 }
@@ -424,6 +556,7 @@ function renderFavorites() {
   el.favoritesGrid.style.display = 'grid';
   el.favEmpty.style.display = 'none';
 
+  // Pour chaque favori (CCA3 code), trouver le pays dans le tableau global
   state.favorites.forEach(cca3 => {
     const country = state.allCountries.find(c => c.cca3 === cca3);
     if (country) el.favoritesGrid.appendChild(createCountryCard(country));
@@ -431,6 +564,7 @@ function renderFavorites() {
 }
 
 function clearAllFavorites() {
+  // ✅ Validation : demander confirmation avant une action destructive
   if (!confirm('Voulez-vous vraiment effacer tous vos favoris ?')) return;
 
   state.favorites = [];
@@ -441,13 +575,18 @@ function clearAllFavorites() {
   showToast('Favoris effacés', 'info');
 }
 
+// ================================================================
+// 15. MÉTÉO – Fetch API + Async/Await + Gestion d'erreur
+// ================================================================
 async function fetchWeather() {
+  // ✅ Validation des données d'entrée
   const city = el.weatherInput.value.trim();
   if (!city) {
     showToast('Veuillez entrer une ville', 'error');
     return;
   }
 
+  // Afficher un indicateur de chargement pendant la requête
   el.weatherResult.innerHTML = `
     <div class="empty-state">
       <i class="fa-solid fa-spinner fa-spin fa-2x"></i>
@@ -455,23 +594,28 @@ async function fetchWeather() {
     </div>`;
 
   try {
+    // ✅ Fetch vers une API externe (requête GET HTTP)
     const url = `${API.WEATHER}?q=${encodeURIComponent(city)}&units=metric&lang=fr&appid=${API.WEATHER_KEY}`;
     const response = await fetch(url);
 
     if (!response.ok) {
+      // Si la clé API est invalide ou la ville introuvable
       if (response.status === 401) throw new Error('Clé API invalide');
       if (response.status === 404) throw new Error(`Ville "${city}" introuvable`);
       throw new Error(`Erreur HTTP: ${response.status}`);
     }
 
-    const data = await response.json();
+    const data = await response.json(); // Convertir la réponse en objet JS
     renderWeather(data);
 
+    // Mettre à jour la stat de température sur le dashboard
     el.statTemp.textContent = `${Math.round(data.main.temp)}°C`;
 
   } catch (error) {
+    // ✅ Gestion d'erreur : afficher un message clair à l'utilisateur
     console.error('Erreur météo:', error.message);
 
+    // Si la clé API n'a pas été configurée, afficher des données de demo
     if (API.WEATHER_KEY === 'YOUR_API_KEY_HERE') {
       renderWeatherDemo(city);
       return;
@@ -487,7 +631,11 @@ async function fetchWeather() {
   }
 }
 
+// ----------------------------------------------------------------
+// Données de démonstration si pas de clé API
+// ----------------------------------------------------------------
 function renderWeatherDemo(city) {
+  // Simuler des données météo pour la démo
   const mockData = {
     name: city,
     sys: { country: 'Demo' },
@@ -499,6 +647,9 @@ function renderWeatherDemo(city) {
   showToast('⚠️ Données de démo – configurez votre clé API', 'info');
 }
 
+// ----------------------------------------------------------------
+// Affichage des données météo dans le DOM
+// ----------------------------------------------------------------
 function renderWeather(data) {
   const icon = data.weather[0].icon;
   const iconUrl = `https://openweathermap.org/img/wn/${icon}@4x.png`;
@@ -536,9 +687,14 @@ function renderWeather(data) {
     </div>`;
 }
 
+// ================================================================
+// 16. CONVERTISSEUR DE DEVISES
+// ================================================================
 function populateCurrencySelects() {
+  // Object.keys() : retourne un tableau des clés d'un objet
   const currencies = Object.keys(state.exchangeRates);
 
+  // Vider et repeupler les listes déroulantes
   [el.currFrom, el.currTo].forEach(select => {
     select.innerHTML = '';
     currencies.forEach(code => {
@@ -554,6 +710,7 @@ function populateCurrencySelects() {
 }
 
 function convertCurrency() {
+  // ✅ Validation des données d'entrée
   const amount = parseFloat(el.currAmount.value);
   const from   = el.currFrom.value;
   const to     = el.currTo.value;
@@ -567,6 +724,7 @@ function convertCurrency() {
     return;
   }
 
+  // Formule : convertir d'abord en USD (base), puis vers la cible
   const inUSD   = amount / state.exchangeRates[from];
   const result  = inUSD * state.exchangeRates[to];
   const rate    = (state.exchangeRates[to] / state.exchangeRates[from]).toFixed(4);
@@ -576,16 +734,19 @@ function convertCurrency() {
 }
 
 function swapCurrencies() {
+  // Échanger les valeurs de deux selects
   [el.currFrom.value, el.currTo.value] = [el.currTo.value, el.currFrom.value];
-  convertCurrency();
+  convertCurrency(); // Recalculer
 }
 
 function renderPopularRates() {
+  // Afficher des taux populaires dans la section devises
   const popular = ['EUR', 'GBP', 'JPY', 'MAD', 'CAD', 'AUD', 'CHF', 'CNY'];
   let container = document.getElementById('popularRatesGrid');
   if (!container || !Object.keys(state.exchangeRates).length) return;
 
   container.innerHTML = '';
+  // Object.entries() retourne des paires [clé, valeur]
   popular.forEach(code => {
     const rate = state.exchangeRates[code];
     if (!rate) return;
@@ -600,16 +761,28 @@ function renderPopularRates() {
   });
 }
 
+// ================================================================
+// 17. NOTIFICATIONS TOAST (Manipulation DOM dynamique)
+// ---------------------------------------------------------------
+// Un "toast" est un petit message qui apparaît brièvement à l'écran.
+// On crée l'élément dynamiquement, on l'ajoute au DOM, puis on le
+// retire automatiquement après 3 secondes.
+// ================================================================
 function showToast(message, type = 'info') {
+  // Mapping des icônes par type
   const icons = { success: 'fa-check-circle', error: 'fa-circle-exclamation', info: 'fa-circle-info' };
 
+  // Créer l'élément toast
   const toast = document.createElement('div');
   toast.className = `toast ${type}`;
   toast.innerHTML = `<i class="fa-solid ${icons[type] || icons.info}"></i> ${message}`;
 
+  // Ajouter au conteneur dans le DOM
   el.toastContainer.appendChild(toast);
+
+  // Retirer automatiquement après 3 secondes
   setTimeout(() => {
-    toast.classList.add('closing');
-    setTimeout(() => toast.remove(), 300);
+    toast.classList.add('closing'); // Animation de sortie
+    setTimeout(() => toast.remove(), 300); // Supprimer du DOM
   }, 3000);
 }

@@ -1,44 +1,57 @@
 <!DOCTYPE html>
-<html lang="fr" data-theme="dark">
+<html lang="fr">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="Smart Travel Dashboard – Explorez les pays, la météo et les devises en temps réel." />
   <title>🌍 Smart Travel Dashboard</title>
 
+  <!-- ✅ Google Fonts : typographie moderne -->
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet" />
 
+  <!-- ✅ Font Awesome : icônes vectorielles -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 
+  <!-- ✅ Nos styles CSS personnalisés -->
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
+  <!-- ====================================================
+       LOADER : Affiché pendant le chargement des données
+       Manipulé via DOM : loader.classList.add('hidden')
+       ==================================================== -->
   <div id="loader" class="loader-overlay">
     <div class="loader-spinner"></div>
     <p class="loader-text">Chargement des données mondiales...</p>
   </div>
 
+  <!-- ====================================================
+       BARRE DE NAVIGATION (HEADER)
+       Contient : logo, recherche globale, horloge, bouton thème
+       ==================================================== -->
   <header class="navbar" id="navbar">
     <div class="navbar-brand">
       <i class="fa-solid fa-earth-americas"></i>
       <span>Smart Travel</span>
     </div>
 
+    <!-- Recherche globale avec événement 'input' en temps réel -->
     <div class="navbar-search">
       <i class="fa-solid fa-search"></i>
       <input type="text" id="globalSearch" placeholder="Rechercher un pays..." autocomplete="off" />
     </div>
 
     <div class="navbar-right">
+      <!-- Horloge live - mise à jour via setInterval() -->
       <div class="clock" id="navClock">00:00:00</div>
-
-      <button class="btn-theme" id="themeToggle" title="Changer le thème">
-        <i class="fa-solid fa-moon" id="themeIcon"></i>
-      </button>
     </div>
   </header>
 
+  <!-- ====================================================
+       NAVIGATION LATÉRALE (Sidebar)
+       Les onglets contrôlent l'affichage des sections
+       ==================================================== -->
   <nav class="sidebar" id="sidebar">
     <a href="#" class="nav-item active" data-section="dashboard" id="nav-dashboard">
       <i class="fa-solid fa-gauge-high"></i>
@@ -64,14 +77,20 @@
     </a>
   </nav>
 
+  <!-- ====================================================
+       CONTENU PRINCIPAL
+       Une seule section est visible à la fois (classe 'active')
+       ==================================================== -->
   <main class="main-content" id="mainContent">
 
+    <!-- ===== SECTION 1 : DASHBOARD ===== -->
     <section class="section active" id="section-dashboard">
       <div class="section-header">
         <h1><i class="fa-solid fa-gauge-high"></i> Tableau de Bord</h1>
         <p>Vue d'ensemble de votre exploration mondiale</p>
       </div>
 
+      <!-- Statistiques - chiffres mis à jour dynamiquement -->
       <div class="stats-grid">
         <div class="stat-card">
           <i class="fa-solid fa-globe stat-icon" style="color:#4facfe;"></i>
@@ -95,6 +114,7 @@
         </div>
       </div>
 
+      <!-- Dernière recherche : données stockées dans sessionStorage -->
       <div class="dashboard-last-search" id="lastSearchCard">
         <h3><i class="fa-solid fa-history"></i> Dernier pays visité</h3>
         <div id="lastSearchBody" class="empty-hint">
@@ -102,6 +122,7 @@
         </div>
       </div>
 
+      <!-- Pays vedettes - 6 aléatoires à chaque chargement -->
       <div class="section-subheader">
         <h2><i class="fa-solid fa-fire"></i> Destinations Vedettes</h2>
         <button class="btn-ghost" id="shuffleBtn">
@@ -111,12 +132,14 @@
       <div class="countries-grid" id="featuredGrid"></div>
     </section>
 
+    <!-- ===== SECTION 2 : EXPLORER LES PAYS ===== -->
     <section class="section" id="section-explore">
       <div class="section-header">
         <h1><i class="fa-solid fa-globe"></i> Explorer les Pays</h1>
         <p>Recherche, filtres et tri en temps réel</p>
       </div>
 
+      <!-- Contrôles de filtrage - événements 'input' et 'change' -->
       <div class="explore-controls">
         <div class="search-box">
           <i class="fa-solid fa-search"></i>
@@ -137,12 +160,15 @@
         </select>
       </div>
 
+      <!-- Résultats et grille de pays -->
       <p class="results-count" id="resultsCount">Chargement...</p>
       <div class="countries-grid" id="countriesGrid"></div>
 
+      <!-- Pagination - navigation entre les pages -->
       <div class="pagination" id="pagination"></div>
     </section>
 
+    <!-- ===== SECTION 3 : MÉTÉO ===== -->
     <section class="section" id="section-weather">
       <div class="section-header">
         <h1><i class="fa-solid fa-cloud-sun"></i> Météo en Direct</h1>
@@ -156,6 +182,7 @@
         </button>
       </div>
 
+      <!-- Zone d'affichage des données météo injectées par JS -->
       <div id="weatherResult" class="weather-result">
         <div class="empty-state">
           <i class="fa-solid fa-cloud-sun-rain fa-3x"></i>
@@ -164,6 +191,7 @@
       </div>
     </section>
 
+    <!-- ===== SECTION 4 : CONVERTISSEUR DE DEVISES ===== -->
     <section class="section" id="section-currency">
       <div class="section-header">
         <h1><i class="fa-solid fa-coins"></i> Convertisseur de Devises</h1>
@@ -196,12 +224,14 @@
         </div>
       </div>
 
+      <!-- Taux populaires – rempli dynamiquement par renderPopularRates() -->
       <div class="popular-rates">
         <h3><i class="fa-solid fa-star"></i> Taux populaires (base : 1 USD)</h3>
         <div id="popularRatesGrid" class="pop-rates-grid"></div>
       </div>
     </section>
 
+    <!-- ===== SECTION 5 : FAVORIS ===== -->
     <section class="section" id="section-favorites">
       <div class="section-header">
         <h1><i class="fa-solid fa-heart"></i> Mes Favoris</h1>
@@ -219,17 +249,29 @@
 
   </main>
 
+  <!-- ====================================================
+       MODAL DÉTAIL PAYS
+       Injecté dynamiquement par openModal(country)
+       ==================================================== -->
   <div class="modal-overlay" id="modal">
     <div class="modal-box" id="modalBox">
       <button class="modal-close" id="modalClose">
         <i class="fa-solid fa-xmark"></i>
       </button>
-      <div id="modalContent"></div>
+      <div id="modalContent"><!-- Contenu injecté par JS --></div>
     </div>
   </div>
 
+  <!-- ====================================================
+       TOAST NOTIFICATIONS (messages flash)
+       Créés dynamiquement via showToast()
+       ==================================================== -->
   <div id="toastContainer" class="toast-container"></div>
 
+  <!-- ====================================================
+       SCRIPTS JAVASCRIPT
+       Placé en bas du body pour que le DOM soit chargé
+       ==================================================== -->
   <script src="script.js"></script>
 </body>
 </html>
