@@ -12,7 +12,6 @@ const state = {
 };
 const API = {
   COUNTRIES: 'https://restcountries.com/v3.1/all',
-  COUNTRIES_FALLBACK: 'https://studies.cs.helsinki.fi/restcountries/api/all',
   EXCHANGE: 'https://open.er-api.com/v6/latest/USD',
   WEATHER: 'https://api.openweathermap.org/data/2.5/weather',
   WEATHER_KEY: 'YOUR_API_KEY_HERE', 
@@ -64,34 +63,21 @@ const el = {
   // Toast
   toastContainer:document.getElementById('toastContainer'),
 };
-// ---------------------------------------------------------------
-// 'DOMContentLoaded' est un événement déclenché quand le HTML est
-// complètement chargé et parsé (sans attendre les images/CSS).
-// C'est le bon moment pour commencer à manipuler le DOM.
-// ================================================================
 document.addEventListener('DOMContentLoaded', () => {
   setupEvents();
   loadAllData();
 });
 
-// ================================================================
-// 5. GESTION DES ÉVÉNEMENTS (Event Listeners)
-// ---------------------------------------------------------------
-// addEventListener(event, callback) attache un écouteur d'événement.
-// On centralise tous les attachements dans une fonction pour
-// la lisibilité et la modularité.
-// ================================================================
+// GESTION DES ÉVÉNEMENTS 
 function setupEvents() {
-  // ✅ Navigation (itération avec forEach sur une NodeList)
   el.navItems.forEach(item => {
     item.addEventListener('click', (event) => {
-      event.preventDefault(); // Empêche le comportement par défaut du lien (<a>)
-      const section = item.getAttribute('data-section'); // Lire un attribut HTML
+      event.preventDefault(); 
+      const section = item.getAttribute('data-section'); 
       showSection(section);
     });
   });
-
-  // ✅ Recherche globale dans la navbar (événement 'input')
+  // Recherche globale dans la navbar (événement 'input')
   el.globalSearch.addEventListener('input', (e) => {
     // On navigue vers l'onglet Explorer si pas déjà là
     showSection('explore');
@@ -141,33 +127,22 @@ function setupEvents() {
   });
 }
 
-// ================================================================
-// 7. NAVIGATION ENTRE SECTIONS (Manipulation DOM)
-// ---------------------------------------------------------------
-// On utilise les classes CSS pour afficher/cacher les sections.
-// classList.add(), classList.remove(), classList.toggle() sont les
-// méthodes clés pour manipuler les classes CSS d'un élément.
-// ================================================================
+// 7. NAVIGATION ENTRE SECTIONS
 function showSection(sectionId) {
   // Désactiver toutes les sections
   el.sections.forEach(s => s.classList.remove('active'));
   el.navItems.forEach(n => n.classList.remove('active'));
-
   // Activer la section cible
   const targetSection = document.getElementById(`section-${sectionId}`);
   const targetNav = document.getElementById(`nav-${sectionId}`);
-
   if (targetSection) targetSection.classList.add('active');
   if (targetNav) targetNav.classList.add('active');
-
   // Actions spécifiques selon la section
   if (sectionId === 'favorites') renderFavorites();
   if (sectionId === 'currency') renderPopularRates();
-
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// ================================================================
 // 8. CHARGEMENT DES DONNÉES (async/await + fetch + Promise)
 // ---------------------------------------------------------------
 // async : déclare une fonction asynchrone qui retourne une Promise
@@ -178,18 +153,15 @@ function showSection(sectionId) {
 async function loadAllData() {
   try {
     // Charger les pays et les taux de change EN PARALLÈLE
-    // Promise.all() exécute plusieurs Promises simultanément
-    // et attend que TOUTES soient résolues
+    // Promise.all() exécute plusieurs Promises simultanément et attend que TOUTES soient résolues
     const [countriesData, ratesData] = await Promise.all([
       fetchCountries(),
       fetchExchangeRates()
     ]);
-
     // Stocker dans l'état global (structures de données)
     state.allCountries = countriesData;
     state.filteredCountries = [...countriesData]; // Copie du tableau avec spread operator
     state.exchangeRates = ratesData;
-
     // Mettre à jour l'interface
     updateDashboardStats();
     renderFeatured();
@@ -197,7 +169,7 @@ async function loadAllData() {
     populateCurrencySelects();
 
   } catch (error) {
-    // ✅ Gestion d'erreur : afficher un message à l'utilisateur
+    // Gestion d'erreur : afficher un message à l'utilisateur
     console.error('Erreur de chargement:', error);
     showToast('Erreur de chargement des données', 'error');
   } finally {
@@ -208,19 +180,11 @@ async function loadAllData() {
 }
 
 // ----------------------------------------------------------------
-// Fonction de récupération des pays avec fallback (plan B)
-// Si l'API principale échoue, on essaie une API de secours.
+// Fonction de récupération des pays
 // ----------------------------------------------------------------
 async function fetchCountries() {
-  // ✅ Fetch + await + vérification de la réponse
   let response = await fetch(API.COUNTRIES);
-  if (!response.ok) {
-    // Fallback : si l'API principale est down
-    console.warn('API principale indisponible, utilisation du fallback...');
-    response = await fetch(API.COUNTRIES_FALLBACK);
-  }
   if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
-  // response.json() retourne une Promise qui résout avec les données parsées
   return await response.json();
 }
 
