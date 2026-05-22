@@ -106,12 +106,6 @@ body {
   align-items: center;
   gap: 16px;
 }
-.clock {
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-  font-weight: 500;
-  font-variant-numeric: tabular-nums;
-}
 
 .sidebar {
   position: fixed;

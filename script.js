@@ -23,7 +23,6 @@ const el = {
   globalSearch:  document.getElementById('globalSearch'),
   navItems:      document.querySelectorAll('.nav-item'), // NodeList (comme un tableau)
   sections:      document.querySelectorAll('.section'),
-  navClock:      document.getElementById('navClock'),
   // Dashboard
   statTotal:     document.getElementById('stat-total'),
   statFavs:      document.getElementById('stat-favs'),
@@ -65,38 +64,18 @@ const el = {
   // Toast
   toastContainer:document.getElementById('toastContainer'),
 };
-// 4. POINT D'ENTRÉE : Initialisation quand le DOM est prêt
 // ---------------------------------------------------------------
 // 'DOMContentLoaded' est un événement déclenché quand le HTML est
 // complètement chargé et parsé (sans attendre les images/CSS).
 // C'est le bon moment pour commencer à manipuler le DOM.
 // ================================================================
 document.addEventListener('DOMContentLoaded', () => {
-  initClock();        // Démarrer l'horloge
-  setupEvents();      // Attacher tous les écouteurs d'événements
-  loadAllData();      // Charger les données depuis les APIs
+  setupEvents();
+  loadAllData();
 });
 
 // ================================================================
-// 5. HORLOGE TEMPS RÉEL – setInterval (asynchrone, périodique)
-// ---------------------------------------------------------------
-// setInterval(callback, ms) : exécute une fonction toutes les X ms.
-// Ici, on met à jour l'heure chaque seconde.
-// ================================================================
-function initClock() {
-  setInterval(() => {
-    const now = new Date(); // Objet Date JavaScript
-    // toLocaleTimeString() formate l'heure selon la locale
-    el.navClock.textContent = now.toLocaleTimeString('fr-FR', {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    });
-  }, 1000); // 1000 ms = 1 seconde
-}
-
-// ================================================================
-// 6. GESTION DES ÉVÉNEMENTS (Event Listeners)
+// 5. GESTION DES ÉVÉNEMENTS (Event Listeners)
 // ---------------------------------------------------------------
 // addEventListener(event, callback) attache un écouteur d'événement.
 // On centralise tous les attachements dans une fonction pour
