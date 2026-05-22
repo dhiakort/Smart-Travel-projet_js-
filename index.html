@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Smart Travel Dashboard – Explorez les pays, la météo et les devises en temps réel." />
+  <title>🌍 Smart Travel Dashboard</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div id="loader" class="loader-overlay">
+    <div class="loader-spinner"></div>
+    <p class="loader-text">Chargement des données mondiales...</p>
+  </div>
+
+  <header class="navbar" id="navbar">
+    <div class="navbar-brand">
+      <i class="fa-solid fa-earth-americas"></i>
+      <span>Smart Travel</span>
+    </div>
+
+    <div class="navbar-search">
+      <i class="fa-solid fa-search"></i>
+      <input type="text" id="globalSearch" placeholder="Rechercher un pays..." autocomplete="off" />
+    </div>
+
+    <div class="navbar-right">
+      <div class="clock" id="navClock">00:00:00</div>
+
+      <button class="btn-theme" id="themeToggle" title="Changer le thème">
+        <i class="fa-solid fa-moon" id="themeIcon"></i>
+      </button>
+    </div>
+  </header>
+
+  <nav class="sidebar" id="sidebar">
+    <a href="#" class="nav-item active" data-section="dashboard" id="nav-dashboard">
+      <i class="fa-solid fa-gauge-high"></i>
+      <span>Dashboard</span>
+    </a>
+    <a href="#" class="nav-item" data-section="explore" id="nav-explore">
+      <i class="fa-solid fa-globe"></i>
+      <span>Explorer</span>
+      <span class="badge" id="badge-total">0</span>
+    </a>
+    <a href="#" class="nav-item" data-section="weather" id="nav-weather">
+      <i class="fa-solid fa-cloud-sun"></i>
+      <span>Météo</span>
+    </a>
+    <a href="#" class="nav-item" data-section="currency" id="nav-currency">
+      <i class="fa-solid fa-coins"></i>
+      <span>Devises</span>
+    </a>
+    <a href="#" class="nav-item" data-section="favorites" id="nav-favorites">
+      <i class="fa-solid fa-heart"></i>
+      <span>Favoris</span>
+      <span class="badge" id="badge-fav">0</span>
+    </a>
+  </nav>
+
+  <main class="main-content" id="mainContent">
+
+    <section class="section active" id="section-dashboard">
+      <div class="section-header">
+        <h1><i class="fa-solid fa-gauge-high"></i> Tableau de Bord</h1>
+        <p>Vue d'ensemble de votre exploration mondiale</p>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <i class="fa-solid fa-globe stat-icon" style="color:#4facfe;"></i>
+          <span class="stat-number" id="stat-total">0</span>
+          <span class="stat-label">Pays disponibles</span>
+        </div>
+        <div class="stat-card">
+          <i class="fa-solid fa-heart stat-icon" style="color:#f093fb;"></i>
+          <span class="stat-number" id="stat-favs">0</span>
+          <span class="stat-label">Favoris sauvegardés</span>
+        </div>
+        <div class="stat-card">
+          <i class="fa-solid fa-magnifying-glass stat-icon" style="color:#43e97b;"></i>
+          <span class="stat-number" id="stat-searches">0</span>
+          <span class="stat-label">Recherches effectuées</span>
+        </div>
+        <div class="stat-card">
+          <i class="fa-solid fa-temperature-half stat-icon" style="color:#fa709a;"></i>
+          <span class="stat-number" id="stat-temp">--°C</span>
+          <span class="stat-label">Dernière météo</span>
+        </div>
+      </div>
+
+      <div class="dashboard-last-search" id="lastSearchCard">
+        <h3><i class="fa-solid fa-history"></i> Dernier pays visité</h3>
+        <div id="lastSearchBody" class="empty-hint">
+          <i class="fa-solid fa-arrow-right"></i> Explorez un pays pour le voir ici
+        </div>
+      </div>
+
+      <div class="section-subheader">
+        <h2><i class="fa-solid fa-fire"></i> Destinations Vedettes</h2>
+        <button class="btn-ghost" id="shuffleBtn">
+          <i class="fa-solid fa-shuffle"></i> Mélanger
+        </button>
+      </div>
+      <div class="countries-grid" id="featuredGrid"></div>
+    </section>
+
+    <section class="section" id="section-explore">
+      <div class="section-header">
+        <h1><i class="fa-solid fa-globe"></i> Explorer les Pays</h1>
+        <p>Recherche, filtres et tri en temps réel</p>
+      </div>
+
+      <div class="explore-controls">
+        <div class="search-box">
+          <i class="fa-solid fa-search"></i>
+          <input type="text" id="exploreSearch" placeholder="Nom, capitale, région..." />
+        </div>
+        <select id="regionFilter" class="filter-select">
+          <option value="">Toutes les régions</option>
+          <option value="Africa">Afrique</option>
+          <option value="Americas">Amériques</option>
+          <option value="Asia">Asie</option>
+          <option value="Europe">Europe</option>
+          <option value="Oceania">Océanie</option>
+        </select>
+        <select id="sortFilter" class="filter-select">
+          <option value="name">Trier par Nom</option>
+          <option value="population">Trier par Population</option>
+          <option value="area">Trier par Superficie</option>
+        </select>
+      </div>
+
+      <p class="results-count" id="resultsCount">Chargement...</p>
+      <div class="countries-grid" id="countriesGrid"></div>
+
+      <div class="pagination" id="pagination"></div>
+    </section>
+
+    <section class="section" id="section-weather">
+      <div class="section-header">
+        <h1><i class="fa-solid fa-cloud-sun"></i> Météo en Direct</h1>
+        <p>Données météo en temps réel via l'API OpenWeatherMap</p>
+      </div>
+
+      <div class="weather-search">
+        <input type="text" id="weatherInput" placeholder="Entrez une ville (ex: Paris, London, Tokyo)..." />
+        <button class="btn-primary" id="weatherBtn">
+          <i class="fa-solid fa-magnifying-glass"></i> Rechercher
+        </button>
+      </div>
+
+      <div id="weatherResult" class="weather-result">
+        <div class="empty-state">
+          <i class="fa-solid fa-cloud-sun-rain fa-3x"></i>
+          <p>Entrez une ville pour voir la météo</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="section-currency">
+      <div class="section-header">
+        <h1><i class="fa-solid fa-coins"></i> Convertisseur de Devises</h1>
+        <p>Taux de change en direct via ExchangeRate-API</p>
+      </div>
+
+      <div class="currency-card">
+        <div class="currency-row">
+          <div class="currency-group">
+            <label>Montant</label>
+            <input type="number" id="currAmount" value="1" min="0" step="0.01" />
+          </div>
+          <div class="currency-group">
+            <label>De</label>
+            <select id="currFrom" class="filter-select"></select>
+          </div>
+          <button class="btn-swap" id="swapBtn" title="Inverser">
+            <i class="fa-solid fa-arrows-rotate"></i>
+          </button>
+          <div class="currency-group">
+            <label>Vers</label>
+            <select id="currTo" class="filter-select"></select>
+          </div>
+        </div>
+        <button class="btn-primary" id="convertBtn">
+          <i class="fa-solid fa-calculator"></i> Convertir
+        </button>
+        <div id="currResult" class="currency-result">
+          <span id="resultText">Résultat apparaîtra ici</span>
+        </div>
+      </div>
+
+      <div class="popular-rates">
+        <h3><i class="fa-solid fa-star"></i> Taux populaires (base : 1 USD)</h3>
+        <div id="popularRatesGrid" class="pop-rates-grid"></div>
+      </div>
+    </section>
+
+    <section class="section" id="section-favorites">
+      <div class="section-header">
+        <h1><i class="fa-solid fa-heart"></i> Mes Favoris</h1>
+        <p>Pays sauvegardés dans le localStorage du navigateur</p>
+      </div>
+      <button class="btn-danger" id="clearFavBtn">
+        <i class="fa-solid fa-trash"></i> Tout effacer
+      </button>
+      <div class="countries-grid" id="favoritesGrid"></div>
+      <div class="empty-state" id="favEmpty" style="display:none">
+        <i class="fa-solid fa-heart-crack fa-3x"></i>
+        <p>Aucun favori. Explorez des pays et cliquez sur ❤️ !</p>
+      </div>
+    </section>
+
+  </main>
+
+  <div class="modal-overlay" id="modal">
+    <div class="modal-box" id="modalBox">
+      <button class="modal-close" id="modalClose">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
